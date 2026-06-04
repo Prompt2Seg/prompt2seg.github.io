@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="Prompt2Seg: Prompting Diffusion Models for Zero-Shot Instance Segmentation">
+  <meta name="keywords" content="Prompt2Seg, diffusion models, instance segmentation, interactive segmentation, zero-shot segmentation, spatial prompts, ControlNet">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prompt2Seg: Prompting Diffusion Models for Zero-Shot Instance Segmentation</title>
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/fonts.css">
+  <link rel="stylesheet" href="./static/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/favicon.svg">
+
+  <script src="./static/js/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-body publication-header">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">
+            Prompting Diffusion Models<br class="desktop-break">for Zero-Shot Instance Segmentation
+          </h1>
+
+          <div class="is-size-4 publication-authors venue-line">
+            <span class="author-block"><b>Under review</b></span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">İrem Zeynep Alagöz<sup>*,1</sup></span>
+            <span class="author-block">Nils Morbitzer<sup>*,1,2</sup></span>
+            <span class="author-block">Andrea Ramazzina<sup>1,3</sup></span>
+            <span class="author-block">Nassir Navab<sup>1,2</sup></span>
+            <span class="author-block">Federico Tombari<sup>1,2</sup></span>
+            <span class="author-block">Stefano Gasperini<sup>1,2,4</sup></span>
+          </div>
+
+          <div class="is-size-5 publication-authors affiliation-line">
+            <span class="author-block"><sup>1</sup>Technical University of Munich</span>
+            <span class="author-block"><sup>2</sup>Munich Center for Machine Learning</span>
+            <span class="author-block"><sup>3</sup>Mercedes-Benz AG</span>
+            <span class="author-block"><sup>4</sup>Visualais</span>
+          </div>
+
+          <div class="is-size-6 publication-authors equal-line">
+            <span class="author-block"><sup>*</sup>Equal contribution.</span>
+          </div>
+
+          <div class="publication-links">
+            <span class="link-block">
+              <span class="button is-normal is-rounded is-dark top-button is-static">
+                <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                <span>arXiv coming soon</span>
+              </span>
+            </span>
+            <span class="link-block">
+              <span class="button is-normal is-rounded is-dark top-button is-static">
+                <span class="icon"><i class="fab fa-github"></i></span>
+                <span>Code upon acceptance</span>
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section teaser-section">
+  <div class="container is-max-widescreen">
+    <div class="columns is-centered">
+      <div class="column is-11">
+        <figure class="image paper-figure">
+          <img src="images/prompt2seg/teaser.png" alt="Prompt2Seg teaser comparing SAM, Gen2Seg, and Prompt2Seg across promptable segmentation examples.">
+        </figure>
+        <p class="has-text-centered figure-caption">
+          Prompt2Seg conditions the diffusion process on spatial user input and produces semantic-aware interactive masks where discriminative models and post-hoc diffusion segmentation can over-segment.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section content-section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-justified">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Several disruptive research directions have recently emerged in computer vision, including foundation models achieving previously unseen zero-shot performance in scene understanding, even interactively, and generative models that synthesize extremely realistic images. The latter have also been shown to be highly effective in scene understanding tasks thanks to their rich priors. However, for promptable segmentation, foundation models struggle with accurately segmenting an object's region, leading to false positives and over-segmentation. Notably, early attempts that leverage generative priors use prompts only during post-processing, yielding suboptimal segments because the process is agnostic to the user input.
+          </p>
+          <p>
+            We target these limitations with <b>Prompt2Seg</b>, a spatial conditioning framework for diffusion-based segmentation. Prompt2Seg augments a frozen diffusion segmentation model with a conditioning branch. Our approach takes spatial prompts, represented as 2D Gaussians or confidence maps, as explicit input signals, training the model to respond directly to user intent. Fine-tuned on a deliberately constrained set of object categories drawn from Hypersim and Virtual KITTI 2, Prompt2Seg generalizes zero-shot to a wide range of unseen object types and visual domains. We evaluate on seven datasets ranging from standard benchmarks to more challenging domains, including paintings, egocentric views, and X-ray data. Furthermore, we demonstrate that Prompt2Seg consistently outperforms the underlying diffusion segmentation backbone across all benchmarks. Our results suggest that the rich priors encoded in generative pretraining, combined with principled spatial conditioning, offer a compelling path toward broadly generalizing interactive segmentation without large-scale mask supervision.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-justified">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Method</h2>
+        <figure class="image paper-figure">
+          <img src="images/prompt2seg/framework.png" alt="Prompt2Seg framework with a frozen diffusion backbone and prompt-conditioned ControlNet branch.">
+        </figure>
+        <p>
+          Prompt2Seg predicts the mask of a target instance from an image and a sparse spatial prompt. It preserves the visual priors of a pretrained diffusion segmentation backbone while adding an explicit spatial control interface. A lightweight ControlNet-style branch receives prompt maps and injects prompt-dependent residuals into the frozen model.
+        </p>
+        <p>
+          Point prompts are converted into Gaussian maps at two spatial scales. The smaller scale preserves precise click localization, while the larger scale gives the model neighborhood context. Instead of segmenting all image regions and selecting an instance afterward, Prompt2Seg learns to generate the prompted foreground region directly against a black background.
+        </p>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-justified">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Zero-Shot Results</h2>
+        <div class="table-container">
+          <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth results-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>COCO S</th>
+                <th>COCO M</th>
+                <th>COCO L</th>
+                <th>DRAM</th>
+                <th>EgoHOS</th>
+                <th>PIDRay</th>
+                <th>VOC</th>
+                <th>HRSOD</th>
+                <th>ZeroWaste</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>SAM</td>
+                <td>57.0</td>
+                <td>59.7</td>
+                <td>57.6</td>
+                <td>51.6</td>
+                <td>59.8</td>
+                <td>44.2</td>
+                <td>45.5</td>
+                <td>71.2</td>
+                <td>45.4</td>
+              </tr>
+              <tr>
+                <td>Gen2Seg</td>
+                <td>8.3</td>
+                <td>38.4</td>
+                <td>58.7</td>
+                <td>47.5</td>
+                <td>40.0</td>
+                <td>34.9</td>
+                <td>39.4</td>
+                <td>64.5</td>
+                <td>45.2</td>
+              </tr>
+              <tr class="ours-row">
+                <td><b>Prompt2Seg</b></td>
+                <td><b>12.1</b></td>
+                <td><b>49.7</b></td>
+                <td><b>62.3</b></td>
+                <td><b>53.1</b></td>
+                <td><b>55.6</b></td>
+                <td><b>47.5</b></td>
+                <td><b>42.4</b></td>
+                <td><b>66.6</b></td>
+                <td><b>51.4</b></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Prompt2Seg consistently improves over Gen2Seg and other synthetic-data baselines across seven zero-shot benchmarks. Compared with SAM, it is strongest on long-tail and domain-shifted data such as DRAM, PIDRay, and ZeroWaste, while remaining competitive on EgoHOS, VOC, and HRSOD. Furthermore, our method exposes substantial limitations on small objects, a weakness shared by Gen2Seg, suggesting it may be a fundamental challenge for diffusion-based approaches rather than specific to our prompting mechanism.
+        </p>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-justified">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Edge Detection Accuracy</h2>
+        <p>
+          Boundary evaluation shows that Prompt2Seg delivers sharper mask contours than Gen2Seg. Despite using the same Gen2Seg model parameters, our method improves boundary quality by directly conditioning the diffusion process on the spatial prompt.
+        </p>
+        <div class="table-container">
+          <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth results-table">
+            <caption class="has-text-left">
+              <b>Table 3:</b> Masks boundary evaluation. Comparison with Gen2Seg on COCO<sub>L</sub>.
+            </caption>
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Boundary F</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>Boundary IoU</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Gen2Seg</td>
+                <td>47.09</td>
+                <td>42.62</td>
+                <td><b>52.61</b></td>
+                <td>19.16</td>
+              </tr>
+              <tr class="ours-row">
+                <td><b>Prompt2Seg</b></td>
+                <td><b>52.63</b></td>
+                <td><b>56.43</b></td>
+                <td>49.31</td>
+                <td><b>21.82</b></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-justified">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Qualitative Results</h2>
+        <figure class="image paper-figure">
+          <img src="images/prompt2seg/qualitatives.png" alt="Qualitative comparison of Prompt2Seg with SAM and Gen2Seg on multiple datasets.">
+        </figure>
+        <p>
+          Qualitative results across natural images, artistic imagery, egocentric scenes, X-rays, salient objects, and waste scenes show how spatial prompting helps disambiguate target objects and preserve challenging boundaries.
+        </p>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-justified">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Beyond Click Prompts</h2>
+        <figure class="image paper-figure">
+          <img src="images/prompt2seg/roadanomaly.png" alt="RoadAnomaly qualitative result showing input image, source map, and Prompt2Seg output.">
+        </figure>
+        <p>
+          Prompt2Seg is not limited to point prompts. It can also consume dense maps, such as anomaly scores or uncertainty maps from another model, and refine noisy source cues into cleaner localized masks.
+        </p>
+        <div class="table-container small-table">
+          <table class="table is-bordered is-striped is-narrow is-hoverable">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>AP ↑</th>
+                <th>FPR ↓</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>RbA</td>
+                <td>85.42</td>
+                <td>6.92</td>
+              </tr>
+              <tr class="ours-row">
+                <td><b>RbA + Prompt2Seg</b></td>
+                <td><b>85.83</b></td>
+                <td><b>2.25</b></td>
+              </tr>
+              <tr>
+                <td>Mask2Former</td>
+                <td>78.45</td>
+                <td>11.83</td>
+              </tr>
+              <tr class="ours-row">
+                <td><b>Mask2Former + Prompt2Seg</b></td>
+                <td><b>88.41</b></td>
+                <td><b>4.95</b></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section bib-section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@misc{alagoz2026prompt2seg,
+  title={Prompting Diffusion Models for Zero-Shot Instance Segmentation},
+  author={Alagöz, İrem Zeynep and Morbitzer, Nils and Ramazzina, Andrea and Navab, Nassir and Tombari, Federico and Gasperini, Stefano},
+  year={2026}
+}</code></pre>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8 has-text-justified">
+        <div class="content">
+          <p>
+            This website was adapted from <a href="https://nerfies.github.io" target="_blank" rel="noopener noreferrer">Nerfies</a>
+            and is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"
+            target="_blank" rel="noopener noreferrer">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+          <p>
+            You can use the <a href="" target="_blank" rel="noopener noreferrer">source code of this website</a>;
+            we ask that you link back to this page in the footer. Please also remember to remove any analytics code in the website's header.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
